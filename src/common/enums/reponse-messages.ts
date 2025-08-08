@@ -8,4 +8,11 @@ export const ResponseMessages = {
 
     //문자 인증 발송
     AUTH_SMS_SEND_SUCCESS: '인증번호가 전송되었습니다.',
+
+    //문자 인증 실패
+    AUTH_NUM_VERIFY_FAIL: '인증번호가 올바르지 않습니다.',
+    AUTH_NUM_EXPIRED:   '인증번호가 만료되었습니다.',
+
+    //문자 인증 성공
+    AUTH_NUM_VERIFY_SUCCESS: '인증이 완료되었습니다.'
 };

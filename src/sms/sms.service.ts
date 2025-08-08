@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { UpdateSmDto } from './dto/update-sm.dto';
+import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
+import {UpdateAuthSmsDTO} from './dto/update-auth-sms.dto';
 import {InjectRepository} from "@nestjs/typeorm";
 import {AuthSms} from "./entities/auth-sms.entity";
-import {Auth, Repository} from "typeorm";
+import {Repository, UpdateResult} from "typeorm";
 import {BizMsg} from "./entities/biz-msg.entity";
 import {CreateBizMsgDTO} from "./dto/create-biz-msg.dto";
 import {CreateAuthSmsDTO} from "./dto/create-auth-sms.dto";
+import {ResponseMessages} from "../common/enums/reponse-messages";
 
 @Injectable()
 export class SmsService {
@@ -26,8 +27,8 @@ export class SmsService {
     return await this.authSmsRepository.save(entity);
   }
 
-  async send(creteAuthSmsDTO: CreateAuthSmsDTO): Promise<AuthSms> {
-    const created = await this.createAuthSms(creteAuthSmsDTO);
+  async send(createAuthSmsDTO: CreateAuthSmsDTO): Promise<AuthSms> {
+    const created = await this.createAuthSms(createAuthSmsDTO);
     const createBizMsgDTO = new CreateBizMsgDTO();
     createBizMsgDTO.destPhone = created.phoneNumber;
     await this.createBizMsg(createBizMsgDTO, created.authNum);
@@ -35,20 +36,51 @@ export class SmsService {
     return created;
   }
 
-  findAll() {
-    return `This action returns alBl sms`;
+  async verify(updateAuthSmsDTO: UpdateAuthSmsDTO) {
+    const entity = await this.findOneByPhoneNumber(updateAuthSmsDTO.phoneNumber);
+
+    if (!entity || updateAuthSmsDTO.authNum !== entity.authNum) {
+      throw new HttpException(
+          ResponseMessages.AUTH_NUM_VERIFY_FAIL,
+          HttpStatus.BAD_REQUEST
+      );
+    }
+
+    if(new Date() > entity.expiresAt){
+      throw new HttpException(
+          ResponseMessages.AUTH_NUM_EXPIRED,
+          HttpStatus.GONE
+      );
+    }
+
+    return await this.updateAuthSms(updateAuthSmsDTO);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} sm`;
+  async findOneByPhoneNumber(phoneNumber: string): Promise<AuthSms | null> {
+    return await this.authSmsRepository.findOne({
+      where: {
+        phoneNumber: phoneNumber,
+        authYn: 'N'
+      },
+      order: {
+        seq: 'DESC',
+      },
+    });
   }
 
-  update(id: number, updateSmDto: UpdateSmDto) {
-    return `This action updates a #${id} sm`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} sm`;
+  async updateAuthSms(updateAuthSmsDTO: UpdateAuthSmsDTO): Promise<UpdateResult> {
+    const entity = updateAuthSmsDTO.toEntity();
+    return await this.authSmsRepository.update(
+        {
+          phoneNumber: entity.phoneNumber,
+          authNum: entity.authNum
+        }, // AND 조건
+        {
+          authYn: entity.authYn,
+          updatedAt: new Date(),
+          updatedIp: entity.updatedIp
+        } // 변경할 값
+    );
   }
 
 }

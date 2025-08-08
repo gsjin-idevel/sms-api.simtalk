@@ -1,10 +1,9 @@
-import {Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Req} from '@nestjs/common';
+import {Body, Controller, HttpException, HttpStatus, Post, Req} from '@nestjs/common';
 import {SmsService} from './sms.service';
-import {UpdateSmDto} from './dto/update-sm.dto';
 import {CreateAuthSmsDTO} from "./dto/create-auth-sms.dto";
 import {ApiResponse} from "../common/dto/api-response.dto";
 import {ResponseMessages} from "../common/enums/reponse-messages";
-import {AuthSms} from "./entities/auth-sms.entity";
+import {UpdateAuthSmsDTO} from "./dto/update-auth-sms.dto";
 
 @Controller('/auth/sms')
 export class SmsController {
@@ -21,23 +20,19 @@ export class SmsController {
     return new ApiResponse(true, ResponseMessages.AUTH_SMS_SEND_SUCCESS, entity.expiresAt);
   }
 
-  @Get()
-  findAll() {
-    return this.smsService.findAll();
+  @Post('/verify')
+  async verify(@Req() req, @Body() updateAuthSmsDTO: UpdateAuthSmsDTO) {
+    const ip: string = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+    if (ip == undefined) return new ApiResponse(false, ResponseMessages.BAD_REQUEST);
+
+    updateAuthSmsDTO.updatedIp = ip
+
+    const updateResult = await this.smsService.verify(updateAuthSmsDTO);
+    if ((updateResult.affected ?? 0) < 1) {
+      throw new HttpException(ResponseMessages.NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    return new ApiResponse(true, ResponseMessages.AUTH_NUM_VERIFY_SUCCESS);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.smsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSmDto: UpdateSmDto) {
-    return this.smsService.update(+id, updateSmDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.smsService.remove(+id);
-  }
 }
