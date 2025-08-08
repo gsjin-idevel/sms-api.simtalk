@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  api:
+    container_name: sms-api-simtalk-container
+    build: .
+    ports:
+      - "3002:3002"
+    env_file:
+      - ${ENV_FILE}   # 여기에 환경파일 경로가 변수로 들어감
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    volumes:
+      - ./logs:/usr/src/app/logs  # 호스트의 logs 폴더를 컨테이너 내부 logs 폴더와 연결
