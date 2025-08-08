@@ -9,7 +9,7 @@ async function bootstrap() {
   // CORS 설정
   app.enableCors({
     origin: [
-      'http://localhost:3000',
+      'http://localhost:3002',
       'https://simtalk.wtest.biz',
     ],
     credentials: true,
