@@ -22,6 +22,6 @@ async function bootstrap() {
   // 글로벌 예외 필터 등록
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3002);
 }
 bootstrap();
