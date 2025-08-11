@@ -1,6 +1,13 @@
 # 1) Node.js 공식 경량 이미지 사용
 FROM node:22.16.0-alpine
 
+# --- 타임존 설정 추가 ---
+RUN apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+    && echo "Asia/Seoul" > /etc/timezone \
+    && apk del tzdata
+# ------------------------
+
 # 2) 작업 디렉터리 설정
 WORKDIR /usr/src/app
 
